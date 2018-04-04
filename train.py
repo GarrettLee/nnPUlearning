@@ -3,11 +3,7 @@ import copy
 import argparse
 import chainer
 
-try:
-    from matplotlib import use
-    use('Agg')
-except ImportError:
-    pass
+
 
 from chainer import Variable, functions as F
 from chainer.training import extensions
@@ -172,6 +168,21 @@ def main():
     args = process_args()
     # dataset setup
     XYtrain, XYtest, prior = load_dataset(args.dataset, args.labeled, args.unlabeled)
+    sample = XYtrain[0][0].transpose([1,2,0])
+    sample_orig = XYtrain[0][0].transpose([1,2,0]).reshape([3, 32, 32]).transpose(1, 2, 0)
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import os
+    os.environ['DISPLAY'] = 'localhost:15.0'
+    print (sample.shape)
+    plt.subplot(121)
+    plt.title('this is used as input')
+    plt.imshow(sample.astype(np.int32))
+    plt.subplot(122)
+    plt.title('this seems to be origin image')
+    plt.imshow(sample_orig.astype(np.int32))
+    plt.show()
+    return
     dim = XYtrain[0][0].size // len(XYtrain[0][0])
     train_iter = chainer.iterators.SerialIterator(XYtrain, args.batchsize)
     test_iter = chainer.iterators.SerialIterator(XYtest, args.batchsize, repeat=False, shuffle=False)
@@ -198,9 +209,9 @@ def main():
                 ['epoch', 'nnPU/loss', 'test/nnPU/error', 'uPU/loss', 'test/uPU/error', 'elapsed_time']))
     if extensions.PlotReport.available():
             trainer.extend(
-                extensions.PlotReport(['nnPU/loss', 'uPU/loss'], 'epoch', file_name=f'training_error.png'))
+                extensions.PlotReport(['nnPU/loss', 'uPU/loss'], 'epoch', file_name='training_error.png'))
             trainer.extend(
-                extensions.PlotReport(['test/nnPU/error', 'test/uPU/error'], 'epoch', file_name=f'test_error.png'))
+                extensions.PlotReport(['test/nnPU/error', 'test/uPU/error'], 'epoch', file_name='test_error.png'))
     print("prior: {}".format(prior))
     print("loss: {}".format(args.loss))
     print("batchsize: {}".format(args.batchsize))
